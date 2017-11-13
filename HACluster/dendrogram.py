@@ -7,7 +7,9 @@
 
 import copy
 import sys
-import numpy as np
+import warnings
+
+from scipy.cluster.hierarchy import is_valid_linkage
 
 import numpy
 
@@ -75,7 +77,8 @@ class Dendrogram(list):
         Z = self[0].adjacency_list()
         Z.sort()
         Z = numpy.array(Z)
-        return Z[:,1:]
+        Z = Z[:,1:]
+        return Z if is_valid_linkage(Z, throw=True) else None
 
     def draw(self, show=True, save=False, format="pdf", labels=None, title=None, fontsize=None):
         """Draw the dendrogram using pylab and matplotlib."""
@@ -93,13 +96,17 @@ class Dendrogram(list):
             raise ImportError("Matplotlib not installed, can't draw dendrogram")
 
         fig = plt.figure()
-        ax = fig.add_subplot(111, axisbg='white')
+        ax = fig.add_subplot(111, facecolor='white')
 
         plt.rcParams['font.family'] = 'arial'
         plt.rcParams['font.size'] = 6
         plt.rcParams['lines.linewidth'] = 0.75
 
-        m = self.to_linkage_matrix()
+        try:
+    	    m = self.to_linkage_matrix()
+        except ValueError as ve:
+            warnings.warn(str(ve))
+            return
 
         d = scipy_dendrogram(m, labels=labels,
                              leaf_font_size=fontsize,
@@ -145,7 +152,12 @@ class Dendrogram(list):
 
         from scipy.cluster.hierarchy import to_tree
 
-        T = to_tree(self.to_linkage_matrix())
+        try:
+            T = to_tree(self.to_linkage_matrix())
+        except ValueError as ve:
+            warnings.warn(str(ve))
+            return
+
         root = Tree()
         root.dist = 0
         root.name = "root"

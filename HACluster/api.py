@@ -5,6 +5,7 @@
 # URL: <https://github.com/fbkarsdorp/HAC-python>
 # For licence information, see LICENCE.TXT
 
+import numpy
 
 class AbstractClusterer(object):
     """
@@ -43,10 +44,10 @@ class AbstractClusterer(object):
         """
         raise AssertionError('AbstractClusterer is an abstract interface')
         
-    def cluster(self, verbose=0, sum_ess=False):
+    def cluster(self, verbose=0, max_dist=numpy.inf, sum_ess=False):
         """
         Cluster all clusters hierarchically unitl the level of 
-        num_clusters is obtained.
+        num_clusters is obtained or max_dist between clusters is exceeded.
         """
         raise AssertionError('AbstractClusterer is an abstract interface')
         

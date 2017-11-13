@@ -46,10 +46,10 @@ Usage example (compare demo()):
 
 from __future__ import absolute_import
 
-from . cluster import *
-from . dendrogram import *
-from . distance import *
-from . linkage import *
+from HACluster.cluster import *
+from HACluster.dendrogram import *
+from HACluster.distance import *
+from HACluster.linkage import *
 
 __all__ = ['Dendrogram', 'Clusterer', 'VNClusterer', 
            'CooccurrenceMatrix', 'DistanceMatrix']

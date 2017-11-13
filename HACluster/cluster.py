@@ -16,10 +16,10 @@ from operator import itemgetter
 from collections import defaultdict
 from itertools import combinations, product
 
-from . api import AbstractClusterer
-from . dendrogram import Dendrogram
-from . linkage import linkage_fn
-from . distance import *
+from HACluster.api import AbstractClusterer
+from HACluster.dendrogram import Dendrogram
+from HACluster.linkage import linkage_fn
+from HACluster.distance import *
 
 from sklearn.metrics.pairwise import pairwise_distances
 
@@ -191,15 +191,15 @@ class Clusterer(AbstractClusterer):
         i, j = numpy.unravel_index(numpy.argmin(clusters), clusters.shape)
         return clusters[i, j], i, j
 
-    def cluster(self, verbose=0, sum_ess=False):
+    def cluster(self, verbose=0, max_dist=numpy.inf, sum_ess=False):
         """
-        Cluster all clusters hierarchically until the level of
-        num_clusters is obtained.
+        Cluster all clusters hierarchically unitl the level of 
+        num_clusters is obtained or max_dist between clusters is exceeded.
 
         @param verbose: how much output is produced during the clustering (0-2)
         @type verbose: C{int}
 
-        @return: None, desctructive method.
+        @return: cluster labels
         """
         ## if sum_ess and self.linkage.__name__ != "ward_link":
         ##     raise ValueError(
@@ -215,6 +215,8 @@ class Clusterer(AbstractClusterer):
                     print(clusters)
 
             best, i, j = self.smallest_distance(clusters)
+            if max_dist < best:
+                break
             # In Ward (1963) ess is summed at each iteration
             # in R's hclust and Python's hcluster and some text books it is not.
             # Here it is optional...
@@ -228,6 +230,11 @@ class Clusterer(AbstractClusterer):
             indices = numpy.arange(clusters.shape[0])
             indices = indices[indices!=j]
             clusters = clusters.take(indices, axis=0).take(indices, axis=1)
+        labels = numpy.arange(self._dist_matrix.shape[0])
+        for i in range(len(self._dendrogram)):
+            for node in self._dendrogram[i].leaves():
+                labels[node.id] = i
+        return labels
 
     def update_distmatrix(self, i, j, clusters):
         """
@@ -270,10 +277,10 @@ class VNClusterer(Clusterer):
                 best = (clusters[i][j], i, j)
         return best
 
-    def cluster(self, verbose=False):
+    def cluster(self, verbose=False, max_dist=numpy.inf):
         # we must sum the error sum of squares in order not to obtain
         # singleton clustering.
-        Clusterer.cluster(self, verbose=verbose, sum_ess=True)
+        Clusterer.cluster(self, verbose=verbose, max_dist=max_dist, sum_ess=True)
 
 
 class EuclideanNeighborClusterer(VNClusterer):
